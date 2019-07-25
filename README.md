@@ -1,5 +1,5 @@
 # Devops-pipelines
-Warehouse of notebooks that container queries to help in root causing pipeline delays in azuredevops that we use in conjunction with azure notebooks.
+Warehouse of notebooks that container [azure data explorer](https://docs.microsoft.com/en-us/azure/data-explorer/) queries to help in root causing pipeline delays in azuredevops that we use in conjunction with [azure notebooks](https://docs.microsoft.com/en-us/azure/notebooks/).
 
 # Contributing
 
