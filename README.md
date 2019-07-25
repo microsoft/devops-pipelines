@@ -1,5 +1,5 @@
 # Devops-pipelines
-warehouse of notebooks that container queries to help in root causing pipeline delays in azuredevops
+Warehouse of notebooks that container queries to help in root causing pipeline delays in azuredevops that we use in conjunction with azure notebooks.
 
 # Contributing
 
