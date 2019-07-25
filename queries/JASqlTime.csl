@@ -1,0 +1,12 @@
+let scaleUnit = {su};
+let startTime = todatetime({start}) - 15min;
+let endTime = todatetime({end}) + 15min;
+let service = {service};
+let interval = 1m;
+JobHistory
+| where PreciseTimeStamp between (startTime .. endTime)
+| where Service =~ service
+| where ScaleUnit =~ scaleUnit
+| summarize sum(SqlExecutionTime) by Plugin, JobName, JobSource 
+| sort by sum_SqlExecutionTime desc
+| limit 25

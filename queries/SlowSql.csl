@@ -1,0 +1,15 @@
+let scaleUnit = {su};
+let startTime = todatetime({start}) - 15min;
+let endTime = todatetime({end}) + 15min;
+let service = {service};
+let interval = 1m;
+ProductTrace
+| where PreciseTimeStamp between (startTime .. endTime)
+| where Service =~ service
+| where ScaleUnit =~ scaleUnit
+| where Role == "JobAgent"
+| where Tracepoint == 64038 //sql slow queries that is the queries taking longer than the usual time for execution.
+| extend K = strcat(RoleInstance, "-", DeploymentId, "-", DeploymentSlot, "-", Method) 
+| summarize count() by K
+| top 25 by count_ desc
+//| render timechart 
