@@ -1,0 +1,8 @@
+TraceLightRailLog
+| where ServiceName =~ 'mms'
+| where Command == 'Stop-ServiceHost'
+| where Message startswith 'HostId = '
+| extend HostId = tostring(split(Message, ' ')[2])
+| summarize by HostId
+| union (ServiceHostAggregated | where StatusReason in ("abuse", "Abuse") | summarize by HostId)
+| distinct HostId

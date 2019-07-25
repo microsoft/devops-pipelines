@@ -1,0 +1,21 @@
+// orchestrator kpi's
+let scaleUnit = {su};
+let startTime = todatetime({start}) - 15min;
+let endTime = todatetime({end}) + 15min;
+let service = {service};
+let hubName = {hub};
+let interval = 1m;
+KPI
+ | where PreciseTimeStamp between (startTime .. endTime)
+ | where Service =~ service
+ | where ScaleUnit =~ scaleUnit
+ | where Metrics contains "DTPlan" or Metrics contains "DTAgent" or Metrics contains "DTJob"   
+ | extend DataObj = parsejson(Metrics) 
+ | extend MetricsObjArr = parsejson(DataObj.metrics)
+ | extend MetricsObj = MetricsObjArr[0]
+ | extend Name = tostring(MetricsObj.name)
+ | extend DisplayName = MetricsObj.displayName
+ | extend Value = todouble(MetricsObj.value)
+ | project PreciseTimeStamp, DataObj, Name, DisplayName, Value, MetricsObj 
+ | summarize sum(Value) by Name, bin(PreciseTimeStamp, interval)
+ | render timechart

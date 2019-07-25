@@ -1,0 +1,9 @@
+let scaleUnit = {su};
+let startTime = todatetime({start}) - 5hr;
+let endTime = todatetime({end}) + 5hr;
+//38 is the VSTS Tenant ID in IcM 
+getincidents(38,startTime, endTime)
+//| where Severity < 3 and IsOutage == 1 and isnull(ParentIncidentId)
+| project IncidentId, Severity, CreateDate, Title, Status, OwningTeamName  
+| where Title contains scaleUnit
+| order by CreateDate desc 

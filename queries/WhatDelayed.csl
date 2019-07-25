@@ -1,0 +1,23 @@
+let scaleUnit = {su};
+let startTime = todatetime({start}) - 15min;
+let endTime = todatetime({end}) + 15min;
+let service = {service};
+let hubName = {hub};
+let interval = 1m;
+CounterEvent
+ | where PreciseTimeStamp between (startTime .. endTime)
+ | where Service =~ service
+ | where ScaleUnit =~ scaleUnit
+ | where Role == 'JobAgent'
+ | where CounterName startswith strcat("\\TFS Services:Orchestration(", hubName) or CounterName startswith "\\TFS Services:JobService(_Total)"
+ | extend NameOnly = extract("\\)\\\\(.*)$", 1, CounterName, typeof(string))
+ | where NameOnly in (
+     'Total Pending Jobs', 
+     'Pending Job Age', 
+     'Average Activity Message Delay', 
+     'Average Activity Job Delay', 
+     'Average Activity Execution Time'
+   )
+ | extend Pivot = replace("(TFS Services:)|(Orchestration\\(Build-)","", CounterName)
+ | summarize avg(CounterValue) by Pivot, bin(PreciseTimeStamp, interval)
+ | render timechart

@@ -1,0 +1,1 @@
+Last_VIP_Swap_Time() | where ScaleUnit == {locationName}

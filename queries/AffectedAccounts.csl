@@ -1,0 +1,28 @@
+let scaleUnit = {su};
+let startTime = todatetime({start}) - 15min;
+let endTime = todatetime({end}) + 15min;
+let service = {service};
+let hubName = {hub};
+let threshold = 10;
+let step = totimespan("1m");
+let window = totimespan("5m");
+let affectedAccounts =
+ProductTrace
+| where PreciseTimeStamp between (startTime .. endTime)
+| where Service =~ service
+| where ScaleUnit =~ scaleUnit
+| where Tracepoint == 15010000
+| where Layer matches regex strcat(hubName, ".*_ActivityDispatcher")
+| extend DbDelay = extract('read from db delay (.*),', 1, Message, typeof(timespan))
+| extend BufferDelay = extract('buffer read delay (.*)', 1, Message, typeof(timespan))
+| extend MessageDelay = DbDelay + BufferDelay
+| summarize avg(MessageDelay) by ServiceHost, Layer, bin(PreciseTimeStamp, step)
+| extend Threshold = strcat(threshold, 's')
+| where avg_MessageDelay > totimespan(Threshold);
+ServiceHostAggregated()
+| join (affectedAccounts) on $left.HostId == $right.ServiceHost
+| where Service =~ service
+| where HostType == 4
+| project Name, HostId, Layer, PreciseTimeStamp, MessageDelayInSeconds = avg_MessageDelay / 1s, DatabaseName, Threshold
+| order by PreciseTimeStamp desc
+// | order by MessageDelayInSeconds desc

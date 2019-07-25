@@ -1,0 +1,32 @@
+// Impacted accounts in time window, and are they known abusers
+//
+let startTime = todatetime({start}) - 15m;
+let endTime = todatetime({end}) + 15m;
+let service = {service};
+let hubName = {hub};
+let scaleUnit = {su};
+let Abusers = TraceLightRailLog
+    | where ServiceName =~ 'mms'
+    | where Command == 'Stop-ServiceHost'
+    | where Message startswith 'HostId = '
+    | extend HostId = tostring(split(Message, ' ')[2])
+    | summarize by HostId
+    | union (ServiceHostAggregated | where StatusReason in ("abuse", "Abuse") | summarize by HostId)
+    | distinct HostId;
+let ActivityDispatcherDelays = ProductTrace
+    | where PreciseTimeStamp between (startTime .. endTime)
+    | where Service =~ service
+    | where ScaleUnit =~ scaleUnit
+    | where Tracepoint == 15010000
+    | where Layer matches regex strcat(hubName, ".*_ActivityDispatcher")
+    | extend DbDelay = extract('read from db delay (.*),', 1, Message, typeof(timespan))
+    | extend BufferDelay = extract('buffer read delay (.*)', 1, Message, typeof(timespan))
+    | extend MessageDelayInSeconds = toint((DbDelay + BufferDelay) / 1s)
+    | join kind=leftouter (ServiceHostAggregated() | where Service =~ service | where HostType == 4 | summarize by HostId, Name)
+      on $left.ServiceHost == $right.HostId;
+// table
+//
+ActivityDispatcherDelays
+| summarize AvgMessageDelay=round(avg(MessageDelayInSeconds)) by Name, HostId
+| extend Abuser = iff(HostId in (Abusers), "yep", "")
+| order by AvgMessageDelay desc
