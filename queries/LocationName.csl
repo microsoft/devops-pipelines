@@ -1,0 +1,7 @@
+let scaleUnit = {su};
+let service = {service};
+ActivityLog
+| where ScaleUnit == scaleUnit
+| where Service =~ service
+| project Tenant
+| take 1
