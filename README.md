@@ -1,6 +1,31 @@
 # Devops-pipelines
 Warehouse of notebooks that container [azure data explorer](https://docs.microsoft.com/en-us/azure/data-explorer/) queries to help in root causing pipeline delays in azuredevops that we use in conjunction with [azure notebooks](https://docs.microsoft.com/en-us/azure/notebooks/).
 
+# Usage
+## Commands
+```
+# Initialize
+!pip install --upgrade pip Kqlmagic nimport azure.kusto.data[pandas]
+%load_ext nimport
+```
+
+```
+# Let's clone our repo, path is not relevant here, this just clones the whole repo
+%nimport container="microsoft/devops-pipelines" path="delays.ipynb" provider="github" providerOptions={"clone":"true"}
+```
+
+```
+# If you have a URL where you want to parse parameters...
+from nimport.utils import open_nb, parse_params
+params = parse_params(currentUrl)
+display(params)
+```
+
+```
+# Open the notebook by replacing the parameters
+open_nb("devops-pipelines/delays.ipynb", params)
+```
+
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

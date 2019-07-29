@@ -1,0 +1,16 @@
+let scaleUnit = {su};
+let startTime = todatetime({start});
+let endTime = todatetime({end});
+let service = {service};
+ActivityLog
+| where Service =~ service and ScaleUnit =~ scaleUnit
+| where ActivityStatus > 0
+| extend VSID = iff(isnotempty(AnonymousIdentifier), AnonymousIdentifier, VSID)
+| extend Reason = iff(ActivityStatus == 1, "failed", "slow")
+| join (
+   ServiceHostAggregated | where Service == service and HostType == 4 and ScaleUnit == scaleUnit
+) on HostId 
+| extend Server = replace(".database.windows.net", "", ServerName)
+| extend Database = replace(strcat({service}, "_", {locationName}, "_"), "", tolower(DatabaseName))
+| summarize Frequency = count() by Server, Database, Reason
+| order by Frequency desc
