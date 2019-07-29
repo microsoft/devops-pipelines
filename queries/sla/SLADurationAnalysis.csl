@@ -1,0 +1,149 @@
+// Identify all orchestrations that are currently out of SLA
+// zacox@microsoft.com
+//
+let triggerTime = {TriggerTime}; // now(), datetime(2019-07-07 20:20:20Z)
+let service = {Service};         // "tfs", "releasemanagement";
+let scaleUnit = {ScaleUnit};     // "tfs-wus-0"
+let startTime = triggerTime - 15m; // allow for kusto ingestion
+let maxPhaseDuration = 2h; // maximum amount of time before treating the phase as missing telemetry
+let triggerFrequency = 1h;
+let searchStartTime = startTime - triggerFrequency;
+let slaLimit = 5m;
+let prodTracePartitions = 12;
+let sev2Threshold = 25; // how many need to break SLA to alert?
+//
+//
+// Consider running plans, and any that completed since the last trigger
+let StartedPlans = ProductTrace
+    | where PreciseTimeStamp < startTime
+        and Tracepoint == 10015547 // TaskHub tracepoint
+        and Service == service
+    | project
+        PlanId = OrchestrationId,
+        StartTime = PreciseTimeStamp;
+let FinishedPlans = ProductTrace
+    | where PreciseTimeStamp < startTime
+        and Tracepoint == 0 // TODO: add a tracepoint :(
+        and Service == service
+        and Message startswith "Completed orchestration with result"
+    | project
+        PlanId = OrchestrationId,
+        FinishTime = PreciseTimeStamp;
+let RecentlyCompletedPlans = FinishedPlans
+    | where FinishTime > searchStartTime
+    | join hint.strategy=shuffle hint.num_partitions = prodTracePartitions
+        StartedPlans on PlanId
+    | project
+        PlanId,
+        Completed = true,
+        PlanDuration = FinishTime - StartTime;
+let RunningPlans = StartedPlans
+    | join hint.strategy=shuffle hint.num_partitions = prodTracePartitions
+        kind=leftanti
+        FinishedPlans on PlanId
+    | project
+        PlanId,
+        Completed = false,
+        PlanDuration = startTime - StartTime;
+let PlansToConsider = union RecentlyCompletedPlans //, RunningPlans
+    | where PlanDuration > slaLimit; // only consider plans that could be out of range
+let PlanIds = PlansToConsider | project PlanId;
+// PlansToConsider | summarize hint.strategy = shuffle count() by Completed
+//
+//
+// Only phases with execution time limits are considered to contribute to the SLA
+let OrchestrationLogSubset = OrchestrationLog
+    | where PreciseTimeStamp < startTime
+    | extend PlanId = substring(OrchestrationId, 0, 36)
+    | where PlanId in (PlanIds); // only consider plans in our subset
+let OrchestrationLogWithSLA = PhaseExecutionTimeOverrides()
+    | where Application == "Pipelines"
+        and Feature == "Build"
+    | join
+        kind=rightouter
+        OrchestrationLogSubset
+        on Application, Feature, Command
+    | extend IsSLA = isnotnull(ExecutionTimeThresholdOverrideInMicroseconds)
+    | project PreciseTimeStamp, Service, ScaleUnit, Application, Feature, Command, ExecutionTimeThreshold,
+        OrchestrationId, StartTime, EndTime, IsExceptionExpected, ExceptionMessage, ExceptionType,
+        PlanId, IsSLA;
+//
+//
+// big ol' map/reduce
+let NullTime = datetime(1601-01-01 00:00:00.0000000);
+let IsValidDate = (dt:datetime) { isnotnull(dt) and dt != NullTime };
+let parallelism = 8;
+let PhaseData = range p from 1 to parallelism step 1 | partition by p
+{
+    OrchestrationLogWithSLA
+    | where hash(PlanId, parallelism) == toscalar(p)
+    | extend EventTime = max_of(StartTime, EndTime)
+    | order by OrchestrationId, EndTime asc, StartTime asc
+    //
+    // generate logical variables
+    | extend IsNextSameOrchestration = (next(OrchestrationId) == OrchestrationId)
+    | extend NextEndTime = next(EndTime)
+    | extend IsEndPhase = IsValidDate(EndTime)
+    | extend IsLastPhase = IsNextSameOrchestration and IsValidDate(NextEndTime)
+    | extend NextStartTime = next(StartTime)
+    //
+    // generate useful variables
+    | extend PhaseStartTime = EventTime
+    | extend PhaseEndTime = case(
+        IsEndPhase, EndTime,
+        IsLastPhase, NextEndTime,
+        IsNextSameOrchestration, NextStartTime, // marks the end of an Orchestration
+        // min_of(startTime, PhaseStartTime + MaxPhaseDuration)) // original
+        startTime) // currently running or dropped-telemetry phases are set to 0s
+    | extend PhaseEndTime = iff(PhaseEndTime - PhaseStartTime > maxPhaseDuration, PhaseStartTime, PhaseEndTime)
+    | extend OidComponents = split(OrchestrationId, ".")
+    | extend OidLookback = iff(isnull(tolong(OidComponents[-1])), -2, -3) // ignore attempt numbers
+    | extend ParentOrchestrationId = strcat_array(array_slice(OidComponents, 1, OidLookback), ".")
+    | extend SLADuration = iff(IsSLA, PhaseEndTime - PhaseStartTime, 0s)
+    | project Service, Application, Feature, ScaleUnit, PhaseStartTime, PhaseEndTime, PlanId,
+        OrchestrationId, ParentOrchestrationId, Command, SLADuration
+};
+//
+//
+// Collect precise phase duration data by plan id.
+let PlanData = PhaseData
+| summarize hint.strategy=shuffle
+    ShortOrchestrationIds = make_list(substring(OrchestrationId, 37)), // remove the guid
+    PhaseEndTimes = make_list(PhaseEndTime),
+    SLADurations = make_list(SLADuration)
+    by PlanId;
+//
+//
+// Compute final SLA violation table
+let Result = PhaseData
+| summarize
+    hint.strategy=shuffle
+    SLADuration = sum(SLADuration), // find total
+    OrchestrationStartTime = min(PhaseStartTime)
+    by ScaleUnit, OrchestrationId, ParentOrchestrationId, PlanId
+//
+// OK: join with table of all phase info by plan id, and sum up all the contributing ancestral SLA durations
+| lookup (PlanData) on PlanId
+| mv-apply
+    AncestorPhaseEndTime = PhaseEndTimes to typeof(datetime),
+    AncestorPhaseDuration = SLADurations to typeof(timespan),
+    Soid = ShortOrchestrationIds to typeof(string)
+    on (
+          where AncestorPhaseEndTime <= OrchestrationStartTime // only phases that completed before the first phase of this orchestration
+        | where ParentOrchestrationId startswith Soid // only ancestor orchestrations
+        | summarize AncestorSLADuration = sum(AncestorPhaseDuration)
+        )
+    | project-away PhaseEndTimes, SLADurations, ShortOrchestrationIds
+//
+//
+// SLA Enforcement
+| project
+    ScaleUnit,
+    PlanId,
+    OrchestrationId,
+    TotalSLADuration = SLADuration + AncestorSLADuration
+| where TotalSLADuration between(slaLimit..maxPhaseDuration)
+//
+// Correlate with plan completion status and total duration
+| lookup (PlansToConsider) on PlanId
+; Result;
