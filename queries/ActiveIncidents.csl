@@ -1,3 +1,4 @@
+//%kql AzureDataExplorer://tenant="Microsoft.com";code;cluster='Icmcluster';database='IcMDataWarehouse' 
 let scaleUnit = {su};
 let startTime = todatetime({start}) - 5hr;
 let endTime = todatetime({end}) + 5hr;
