@@ -1,0 +1,63 @@
+// CIAO phase performance analysis
+// zacox@microsoft.com
+//
+let oid = {OrchestrationId}; // "7d1c09de-35e8-44ed-8720-279b117caf1d.job_1.__default.135";
+let su = {ScaleUnit};
+let currentTime = now() - 15m; // always use most upto date data
+let oidComponents = split(oid, ".");
+let oidLookback = iff(isnull(tolong(oidComponents[-1])), -2, -3); // ignore attempt numbers
+let parentOid = strcat_array(array_slice(oidComponents, 0, oidLookback), ".");
+let planid = substring(oid, 0, 36);
+let useSev2Thresholds = true;
+let maxPhaseDuration = 2h;
+//
+//
+// compute phase performance
+let IsValidDate = (dt:datetime) { isnotnull(dt) and dt != datetime(1601-01-01 00:00:00.0000000) };
+OrchestrationLog
+| where isempty(su) or ScaleUnit == su
+| where Application == "Pipelines" and Feature == "Build"
+| where oid == OrchestrationId or (isnotempty(OrchestrationId) and parentOid startswith OrchestrationId)
+| lookup
+    (PhaseExecutionTimeOverrides() | where Application == "Pipelines" and Feature == "Build")
+    on Application, Feature, Command
+| extend ExecutionTimeThreshold = iff(
+    isnotnull(ExecutionTimeThresholdOverrideInMicroseconds),
+    ExecutionTimeThresholdOverrideInMicroseconds * 1microsecond,
+    max_of(0s, ExecutionTimeThreshold * 1microsecond))
+| project OrchestrationId, Command, ExecutionTimeThreshold, StartTime, EndTime
+//
+// compute phase durations
+| order by OrchestrationId, EndTime asc, StartTime asc // cluster by orchestration id
+| extend IsNextSameOrchestration = (next(OrchestrationId) == OrchestrationId)
+| extend NextEndTime = next(EndTime)
+| extend IsEndPhase = IsValidDate(EndTime)
+| extend IsLastPhase = IsNextSameOrchestration and IsValidDate(NextEndTime)
+| extend IsPrevSameOrchestration = (prev(OrchestrationId) == OrchestrationId)
+| extend NextStartTime = next(StartTime)
+| extend PhaseStartTime = max_of(StartTime, EndTime)
+| extend PhaseEndTime = case(
+    IsEndPhase, EndTime,
+    IsLastPhase, NextEndTime,
+    IsNextSameOrchestration, NextStartTime, // Ending of Orchestration
+    currentTime)
+| extend Duration = PhaseEndTime - PhaseStartTime
+| extend Difference = Duration - ExecutionTimeThreshold
+| extend PercentDifference =
+    iff(ExecutionTimeThreshold > 0s,
+        round(100 * todouble(Difference / 1microsecond) / todouble(ExecutionTimeThreshold / 1microsecond), 2),
+        double(0))
+//
+// analytics
+| order by EndTime asc, StartTime asc
+| project PlanId = planid,
+          OrchestrationId = strcat_array(array_slice(split(OrchestrationId, '.'), 1, 300), '.'),
+          PhaseName = Command,
+          Actual=Duration,
+          Expected=ExecutionTimeThreshold,
+          PercentDifference,
+          OwningTeam = split(Command, ".")[0],
+          Level = case(
+            PercentDifference > 50, 2, // "Very Suspicious"
+            PercentDifference > 20, 3, // "Suspicious"
+                                    0) // "Normal"
