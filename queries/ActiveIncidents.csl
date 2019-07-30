@@ -1,7 +1,7 @@
 //%kql AzureDataExplorer://tenant="Microsoft.com";code;cluster='Icmcluster';database='IcMDataWarehouse' 
-let scaleUnit = {su};
-let startTime = todatetime({start}) - 5hr;
-let endTime = todatetime({end}) + 5hr;
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 5hr;
+let endTime = todatetime("{end}") + 5hr;
 //38 is the VSTS Tenant ID in IcM 
 getincidents(38,startTime, endTime)
 //| where Severity < 3 and IsOutage == 1 and isnull(ParentIncidentId)

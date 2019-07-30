@@ -1,9 +1,9 @@
 // orchestrator kpi's
-let scaleUnit = {su};
-let startTime = todatetime({start}) - 15min;
-let endTime = todatetime({end}) + 15min;
-let service = {service};
-let hubName = {hub};
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 15min;
+let endTime = todatetime("{end}") + 15min;
+let service = "{service}";
+let hubName = "{hub}";
 let interval = 1m;
 KPI
  | where PreciseTimeStamp between (startTime .. endTime)

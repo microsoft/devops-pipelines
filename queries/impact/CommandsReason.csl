@@ -1,7 +1,7 @@
-let scaleUnit = {su};
-let startTime = todatetime({start});
-let endTime = todatetime({end});
-let service = {service};
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}");
+let endTime = todatetime("{end}");
+let service = "{service}";
 ActivityLog
 | where Service =~ service and ScaleUnit =~ scaleUnit
 | where ActivityStatus > 0

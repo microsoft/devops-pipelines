@@ -1,5 +1,5 @@
-let scaleUnit = {su};
-let service = {service};
+let scaleUnit = "{su}";
+let service = "{service}";
 ActivityLog
 | where ScaleUnit == scaleUnit
 | where Service =~ service

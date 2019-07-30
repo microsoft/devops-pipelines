@@ -1,7 +1,7 @@
-let scaleUnit = {su};
-let startTime = todatetime({start}) - 15min;
-let endTime = todatetime({end}) + 15min;
-let service = {service};
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 15min;
+let endTime = todatetime("{end}") + 15min;
+let service = "{service}";
 let interval = 1m;
 ProductTrace
 | where PreciseTimeStamp between (startTime .. endTime)
