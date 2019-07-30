@@ -1,7 +1,7 @@
-let scaleUnit = {su};
-let startTime = todatetime({start}) - 5hr;
-let endTime = todatetime({end}) + 5hr;
-let service = {service};
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 5hr;
+let endTime = todatetime("{end}") + 5hr;
+let service = "{service}";
 let threshold = 10;
 let step = totimespan("1m");
 let window = totimespan("5m");

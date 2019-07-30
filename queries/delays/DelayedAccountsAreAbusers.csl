@@ -1,10 +1,10 @@
 // Impacted accounts in time window, and are they known abusers
 //
-let startTime = todatetime({start}) - 15m;
-let endTime = todatetime({end}) + 15m;
-let service = {service};
-let hubName = {hub};
-let scaleUnit = {su};
+let startTime = todatetime("{start}") - 15m;
+let endTime = todatetime("{end}") + 15m;
+let service = "{service}";
+let hubName = "{hub}";
+let scaleUnit = "{su}";
 let Abusers = TraceLightRailLog
     | where ServiceName =~ 'mms'
     | where Command == 'Stop-ServiceHost'
