@@ -10,6 +10,9 @@ let parentOid = strcat_array(array_slice(oidComponents, 0, oidLookback), ".");
 let planid = substring(oid, 0, 36);
 let useSev2Thresholds = true;
 let maxPhaseDuration = 2h;
+let definitionName = toscalar(OrchestrationPlanContext
+    | where OrchestrationId startswith planid
+    | project DefinitionName | take 1);
 //
 //
 // compute phase performance
@@ -25,7 +28,7 @@ OrchestrationLog
     isnotnull(ExecutionTimeThresholdOverrideInMicroseconds),
     ExecutionTimeThresholdOverrideInMicroseconds * 1microsecond,
     max_of(0s, ExecutionTimeThreshold * 1microsecond))
-| project OrchestrationId, Command, ExecutionTimeThreshold, StartTime, EndTime
+| project OrchestrationId, Command, ExecutionTimeThreshold, StartTime, EndTime, ScaleUnit, Region
 //
 // compute phase durations
 | order by OrchestrationId, EndTime asc, StartTime asc // cluster by orchestration id
@@ -52,9 +55,12 @@ OrchestrationLog
 | order by EndTime asc, StartTime asc
 | project PlanId = planid,
           OrchestrationId = strcat_array(array_slice(split(OrchestrationId, '.'), 1, 300), '.'),
+          DefinitionName = definitionName,
+          ScaleUnit,
+          Region,
           PhaseName = Command,
-          Actual=Duration,
-          Expected=ExecutionTimeThreshold,
+        //   Actual=Duration,
+        //   Expected=ExecutionTimeThreshold,
           PercentDifference,
           OwningTeam = split(Command, ".")[0],
           Level = case(
