@@ -45,7 +45,7 @@ let RunningPlans = StartedPlans
         PlanId,
         Completed = false,
         PlanDuration = startTime - StartTime;
-let PlansToConsider = union RecentlyCompletedPlans //, RunningPlans
+let PlansToConsider = union RecentlyCompletedPlans //, RunningPlans // zacox: ignore running plans -- telemetry is too flakey
     | where PlanDuration > slaLimit; // only consider plans that could be out of range
 let PlanIds = PlansToConsider | project PlanId;
 // PlansToConsider | summarize hint.strategy = shuffle count() by Completed
@@ -145,5 +145,17 @@ let Result = PhaseData
 | where TotalSLADuration between(slaLimit..maxPhaseDuration)
 //
 // Correlate with plan completion status and total duration
-| lookup (PlansToConsider) on PlanId
-; Result;
+| lookup (PlansToConsider) on PlanId;
+//
+//
+// Kalypso monitor mode: only take any if there are more that a certain number of problems
+// Result
+// | summarize hint.strategy=shuffle
+//     Count=count(),
+//     OrchestrationIds = make_list(OrchestrationId),
+//     arg_max(TotalSLADuration, *) // find worst
+// | where Count > sev2Threshold
+// | extend TriggerTime = triggerTime
+//
+// Analytics mode:
+Result
