@@ -1,0 +1,21 @@
+let dbName = "{db}";
+let startTime = todatetime("{start}");
+let endTime = todatetime("{end}");
+let scaleUnit = "{su}";
+let service = "{service}";
+XEventDataRPCCompleted
+| where EventTime between (startTime .. endTime)
+| where Service == service
+| where ScaleUnit == scaleUnit
+| where DatabaseName == dbName
+| join kind=inner
+(
+    ActivityLog
+    | where StartTime <= endTime and TIMESTAMP >= startTime // Activity started before endTime and finished after startTime
+    | where Service == service
+    | where ScaleUnit == scaleUnit
+    | extend Agent = iff(UserAgent contains "mozilla", "Browser", UserAgent) 
+    | summarize by Application, Command, ApplicationHash, CommandHash, Agent 
+) on ApplicationHash, CommandHash
+| summarize sum(CpuTime) by HostId, VSID, Application, Command, Agent, bin(EventTime, 5m)
+| order by sum_CpuTime desc
