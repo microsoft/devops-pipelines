@@ -13,5 +13,5 @@ XEventDataRPCCompleted
     | where Service == service and ScaleUnit == scaleUnit
     | summarize by Plugin, HostId=JobSource, UniqueIdentifier=JobId
 ) on HostId, UniqueIdentifier
-| summarize sum(CpuTime) by Plugin
+| summarize sum(CpuTime) by Plugin, HostId
 | top 20 by sum_CpuTime desc
