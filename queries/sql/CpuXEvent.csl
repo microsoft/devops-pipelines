@@ -1,0 +1,22 @@
+let dbName = "{db}";
+let startTime = todatetime("{start}");
+let endTime = todatetime("{end}");
+let XEventTypes = datatable (TypeName:string, Type:long)
+[   "None", 0,  
+    "Activity", 1 ,  
+    "Job",  2,  
+    "Task" , 4,
+    "JobTask", 6,
+    "Notification", 8, 
+    "Pipeline", 16,
+    "PipelineActivity", 17,
+    "PipelineJob", 18,
+    "AnonymousActivity", 33,
+    "PublicActivity", 65,
+    "Other",  128 ];
+XEventDataRPCCompleted
+| where EventTime between (startTime .. endTime)
+| where DatabaseName == dbName
+| join kind=leftouter (XEventTypes) on Type 
+| summarize sum(CpuTime) by TypeName, ObjectName
+| order by sum_CpuTime desc

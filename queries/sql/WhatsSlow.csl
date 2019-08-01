@@ -1,0 +1,7 @@
+let dbName = "{db}";
+let startTime = todatetime("{start}") - 5hr;
+let endTime = todatetime("{end}") + 5hr;
+DatabasePerformanceStatistics
+| where TIMESTAMP between (startTime .. endTime) 
+| where DatabaseName =~ dbName
+| summarize avg(AverageCpuPercentage), avg(AverageMemoryUsagePercentage), avg(AverageLogWriteUtilizationPercentage), max(MaximumWorkerPercentage) by bin(PeriodStart, 1m), ServiceObjective

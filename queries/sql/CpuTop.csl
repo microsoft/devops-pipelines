@@ -1,0 +1,8 @@
+let dbName = "{db}";
+let startTime = todatetime("{start}");
+let endTime = todatetime("{end}");
+QDS
+| where TIMESTAMP between (startTime .. endTime)
+| where DatabaseName == dbName
+| summarize sum(TotalCpuTime), sum(TotalPhysicalReads), sum(TotalLogicalReads), sum(TotalExecutions), sum(TotalExceptions) by QueryText
+| top 10 by sum_TotalCpuTime desc
