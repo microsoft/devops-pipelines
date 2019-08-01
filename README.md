@@ -29,11 +29,13 @@ open_nb("devops-pipelines/delays.ipynb", params)
 # Contributing
 
 ## Requirements
-`pip install pre-commit`
+- Commands
 
-`pre-commit install`
+    `pip install pre-commit`
 
-Open PRs'!
+    `pre-commit install`
+
+- Open PRs'!
 
 ## Notice
 
