@@ -1,0 +1,17 @@
+let dbName = "{db}";
+let startTime = todatetime("{start}");
+let endTime = todatetime("{end}");
+let scaleUnit = "{su}";
+let service = "{service}";
+XEventDataRPCCompleted
+| where EventTime between (startTime .. endTime )
+| where ScaleUnit == scaleUnit and DatabaseName == dbName
+| join kind=inner
+(
+    JobHistory
+    | where StartTime <= endTime and PreciseTimeStamp >= startTime 
+    | where Service == service and ScaleUnit == scaleUnit
+    | summarize by Plugin, HostId=JobSource, UniqueIdentifier=JobId
+) on HostId, UniqueIdentifier
+| summarize sum(CpuTime) by Plugin
+| top 20 by sum_CpuTime desc
