@@ -4,27 +4,28 @@
 let triggerTime = {TriggerTime}; // now(), datetime(2019-07-07 20:20:20Z)
 let service = {Service};         // "tfs", "releasemanagement";
 let scaleUnit = {ScaleUnit};     // "tfs-wus-0"
+let lookback = {Lookback};       // how often does the query run?
+//
 let startTime = triggerTime - 15m; // allow for kusto ingestion
 let maxPhaseDuration = 2h; // maximum amount of time before treating the phase as missing telemetry
-let triggerFrequency = 1h;
-let searchStartTime = startTime - triggerFrequency;
+let searchStartTime = startTime - lookback;
 let slaLimit = 5m;
 let prodTracePartitions = 12;
-let sev2Threshold = 25; // how many need to break SLA to alert?
+let sev2Threshold = 25; // how many need to break SLA per scale unit to alert?
 //
 //
 // Consider running plans, and any that completed since the last trigger
 let StartedPlans = ProductTrace
     | where PreciseTimeStamp < startTime
         and Tracepoint == 10015547 // TaskHub tracepoint
-        and Service == service
+        and (isempty(service) or Service == service)
     | project
         PlanId = OrchestrationId,
         StartTime = PreciseTimeStamp;
 let FinishedPlans = ProductTrace
     | where PreciseTimeStamp < startTime
         and Tracepoint == 0 // TODO: add a tracepoint :(
-        and Service == service
+        and (isempty(service) or Service == service)
         and Message startswith "Completed orchestration with result"
     | project
         PlanId = OrchestrationId,
@@ -58,13 +59,12 @@ let OrchestrationLogSubset = OrchestrationLog
     | where PlanId in (PlanIds); // only consider plans in our subset
 let OrchestrationLogWithSLA = PhaseExecutionTimeOverrides()
     | where Application == "Pipelines"
-        and Feature == "Build"
     | join
         kind=rightouter
         OrchestrationLogSubset
         on Application, Feature, Command
     | extend IsSLA = isnotnull(ExecutionTimeThresholdOverrideInMicroseconds)
-    | project PreciseTimeStamp, Service, ScaleUnit, Application, Feature, Command, ExecutionTimeThreshold,
+    | project PreciseTimeStamp, Service, Region, ScaleUnit, Application, Feature, Command, ExecutionTimeThreshold,
         OrchestrationId, StartTime, EndTime, IsExceptionExpected, ExceptionMessage, ExceptionType,
         PlanId, IsSLA;
 //
@@ -100,8 +100,8 @@ let PhaseData = range p from 1 to parallelism step 1 | partition by p
     | extend OidLookback = iff(isnull(tolong(OidComponents[-1])), -2, -3) // ignore attempt numbers
     | extend ParentOrchestrationId = strcat_array(array_slice(OidComponents, 1, OidLookback), ".")
     | extend SLADuration = iff(IsSLA, PhaseEndTime - PhaseStartTime, 0s)
-    | project Service, Application, Feature, ScaleUnit, PhaseStartTime, PhaseEndTime, PlanId,
-        OrchestrationId, ParentOrchestrationId, Command, SLADuration
+    | project Service, Region, ScaleUnit, PhaseStartTime, SLADuration, PhaseEndTime,
+        PlanId, OrchestrationId, ParentOrchestrationId
 };
 //
 //
@@ -116,11 +116,10 @@ let PlanData = PhaseData
 //
 // Compute final SLA violation table
 let Result = PhaseData
-| summarize
-    hint.strategy=shuffle
+| summarize hint.strategy=shuffle
     SLADuration = sum(SLADuration), // find total
     OrchestrationStartTime = min(PhaseStartTime)
-    by ScaleUnit, OrchestrationId, ParentOrchestrationId, PlanId
+    by Service, Region, ScaleUnit, OrchestrationId, ParentOrchestrationId, PlanId
 //
 // OK: join with table of all phase info by plan id, and sum up all the contributing ancestral SLA durations
 | lookup (PlanData) on PlanId
@@ -137,27 +136,25 @@ let Result = PhaseData
 //
 //
 // SLA Enforcement
-| project
-    ScaleUnit,
-    PlanId,
-    OrchestrationId,
-    TotalSLADuration = SLADuration + AncestorSLADuration
-| where TotalSLADuration between(slaLimit..maxPhaseDuration)
-//
-// Correlate with plan completion status and total duration
+| where SLADuration + AncestorSLADuration between(slaLimit..maxPhaseDuration)
 | lookup (PlansToConsider) on PlanId
-| where TotalSLADuration < PlanDuration // if SLA is longer than entire plan, we have dropped telemetry for sure.
+| project Service, Region, ScaleUnit, PlanId, OrchestrationId,
+    PlanDuration = PlanDuration / 1s,
+    TotalSLADuration = (SLADuration + AncestorSLADuration) / 1s
+
 ;
 //
 //
-// Kalypso monitor mode: only take any if there are more that a certain number of problems
-// Result
-// | summarize hint.strategy=shuffle
-//     Count=count(),
-//     OrchestrationIds = make_list(OrchestrationId),
-//     arg_max(TotalSLADuration, *) // find worst
-// | where Count > sev2Threshold
-// | extend TriggerTime = triggerTime
-//
-// Analytics mode:
 Result
+//
+// Kalypso monitor mode: only take any if there are more that a certain number of problems
+// | summarize hint.strategy=shuffle
+//     NumberOfOrchestrations=count(),
+//     NumberOfPlans = dcount(PlanId),
+//     AvgSLADuration = avg(TotalSLADuration),
+//     MaxSLADuration = max(TotalSLADuration),
+//     MinSLADuration = min(TotalSLADuration)
+//     by Service, Region, ScaleUnit
+// | where NumberOfOrchestrations > sev2Threshold
+// | project TriggerTime = triggerTime, Lookback=lookback, Service, Region, ScaleUnit,
+//     MinSLADuration, AvgSLADuration, MaxSLADuration, NumberOfOrchestrations, NumberOfPlans
