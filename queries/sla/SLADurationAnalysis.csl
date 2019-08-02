@@ -137,7 +137,11 @@ let Result = PhaseData
 //
 // SLA Enforcement
 | where SLADuration + AncestorSLADuration between(slaLimit..maxPhaseDuration)
-| project Service, Region, ScaleUnit, PlanId, OrchestrationId, TotalSLADuration = SLADuration + AncestorSLADuration
+| lookup (PlansToConsider) on PlanId
+| project Service, Region, ScaleUnit, PlanId, OrchestrationId,
+    PlanDuration / 1s,
+    TotalSLADuration = (SLADuration + AncestorSLADuration) / 1s
+
 ;
 //
 //
