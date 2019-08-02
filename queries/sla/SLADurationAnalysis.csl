@@ -141,7 +141,6 @@ let Result = PhaseData
 | project Service, Region, ScaleUnit, PlanId, OrchestrationId,
     PlanDuration = PlanDuration / 1s,
     TotalSLADuration = (SLADuration + AncestorSLADuration) / 1s
-
 ;
 //
 //
