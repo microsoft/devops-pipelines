@@ -1,0 +1,19 @@
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 8hr;
+let endTime = todatetime("{end}") + 15min;
+let diff = endTime - startTime;
+let service = "{service}";
+let interval = 1m;
+VssHealthAgentGarbageCollection 
+| where PreciseTimeStamp >= startTime and PreciseTimeStamp <= endTime
+| where Service =~ service and ScaleUnit =~ scaleUnit
+| where Environment == "PROD"
+| where DeploymentSlot == "Production"
+| where Generation == 2
+| where ProcessName in ("w3wp", "TfsJobAgent")
+| make-series Count = count() on PreciseTimeStamp in range(startTime, endTime, diff/4) by ProcessName
+| mv-expand PreciseTimeStamp, Count
+| where Count  > 0
+| extend Number = toint(Count)
+| extend Time = todatetime(PreciseTimeStamp)
+| order by Time desc
