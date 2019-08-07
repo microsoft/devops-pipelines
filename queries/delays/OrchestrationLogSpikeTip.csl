@@ -1,0 +1,22 @@
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 8hr;
+let endTime = todatetime("{end}") + 15min;
+let service = "{service}";
+let hubName = "{hub}";
+let command = "{command}";
+let threshold = 10;
+let step = totimespan("1m");
+let window = totimespan("5m");
+let interval = 1m;
+ OrchestrationLog
+ | where PreciseTimeStamp between (startTime .. endTime)
+ | where Service =~ service
+ | where ScaleUnit =~ scaleUnit
+ | where Command contains command
+ | project PreciseTimeStamp, OrchestrationId, ExceptionMessage, Feature
+ | top 1000 by PreciseTimeStamp desc
+
+// Take some sample orchestrationId and run this
+// union *
+// | where OrchestrationId startswith "962bc602-7762-44d9-bb7a-9bef78ee967f"
+// | project PreciseTimeStamp, Message
