@@ -7,3 +7,4 @@ let window = totimespan("5m");
 let tenant = "{locationName}";
 WhatChangedRange(tenant=tenant, startTime, endTime-startTime)
 | extend  Name=strcat(['title'], "@", tostring(TIMESTAMP))
+| order by end asc
