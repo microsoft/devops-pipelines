@@ -8,12 +8,15 @@ let threshold = 10;
 let step = totimespan("1m");
 let window = totimespan("5m");
 let interval = 1m;
+// Inject hostId here
+let hostId = "";
  OrchestrationLog
  | where PreciseTimeStamp between (startTime .. endTime)
  | where Service =~ service
  | where ScaleUnit =~ scaleUnit
+ | where HostId startswith hostId
  | where Command contains command
- | project PreciseTimeStamp, OrchestrationId, ExceptionMessage, Feature
+ | project PreciseTimeStamp, OrchestrationId, ExceptionMessage, Feature, HostId
  | top 1000 by PreciseTimeStamp desc
 
 // Take some sample orchestrationId and run this
