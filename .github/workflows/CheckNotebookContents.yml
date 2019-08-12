@@ -8,5 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: yaananth/notebook-sanitizer@master
       - uses: actions/checkout@master
+      - name: Install dependencies
+        run: |
+          pip install --upgrade nbstripout
