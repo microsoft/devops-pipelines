@@ -1,4 +1,4 @@
-name: CI
+name: Check notebook contents
 
 on: [pull_request]
 
