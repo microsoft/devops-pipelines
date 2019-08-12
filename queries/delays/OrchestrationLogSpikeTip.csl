@@ -33,5 +33,6 @@ let hostId = "{hostId}";
 //         ResponseCode, 
 //         Level, // for coloring :)
 //         ActivityId, 
-//         ExceptionMessage
+//         ExceptionMessage,
+//         UserAgent
 // | extend HostName = hostName
