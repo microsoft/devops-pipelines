@@ -32,3 +32,4 @@ jobs:
         env:
           STEPS_CONTEXT: ${{ toJson(steps) }}
         run: echo "$STEPS_CONTEXT"
+      - uses: yaananth/notebook-sanitizer@master
