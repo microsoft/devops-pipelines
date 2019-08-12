@@ -1,6 +1,6 @@
 name: CheckNotebookContents
 
-on: [push]
+on: [pull_request]
 
 jobs:
   check:
