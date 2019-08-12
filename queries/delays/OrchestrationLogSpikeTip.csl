@@ -1,5 +1,5 @@
 let scaleUnit = "{su}";
-let startTime = todatetime("{start}") - 8hr;
+let startTime = todatetime("{start}") - 15min;
 let endTime = todatetime("{end}") + 15min;
 let service = "{service}";
 let hubName = "{hub}";
@@ -8,8 +8,7 @@ let threshold = 10;
 let step = totimespan("1m");
 let window = totimespan("5m");
 let interval = 1m;
-// Inject hostId here
-let hostId = "";
+let hostId = "{hostId}";
  OrchestrationLog
  | where PreciseTimeStamp between (startTime .. endTime)
  | where Service =~ service

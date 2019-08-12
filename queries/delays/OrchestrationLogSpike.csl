@@ -7,10 +7,12 @@ let threshold = 10;
 let step = totimespan("1m");
 let window = totimespan("5m");
 let interval = 1m;
+let hostId = "{hostId}";
  OrchestrationLog
  | where PreciseTimeStamp between (startTime .. endTime)
  | where Service =~ service
  | where ScaleUnit =~ scaleUnit
+ | where HostId startswith hostId
  | where Command contains "CIPlatform"
- | summarize C=count() by Command, bin(PreciseTimeStamp, 15min)
+ | summarize C=count() by Command, HostId, bin(PreciseTimeStamp, 15min)
  | order by C desc
