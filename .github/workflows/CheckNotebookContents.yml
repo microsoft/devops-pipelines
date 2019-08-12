@@ -12,3 +12,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade nbstripout
+      - name: Update contents
+        run: |
+          cat ${{runner.workspace}}
