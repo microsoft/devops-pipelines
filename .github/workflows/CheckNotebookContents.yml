@@ -14,7 +14,6 @@ jobs:
           pip install --upgrade nbstripout
       - name: Update contents
         run: |
-          repoDirectory = ${{runner.workspace}}
-          for filename in /repoDirectory/*.ipynb; do
+          for filename in /${{runner.workspace}}/*.ipynb; do
             cat filename
           done
