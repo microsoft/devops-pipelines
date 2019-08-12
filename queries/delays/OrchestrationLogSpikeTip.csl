@@ -19,6 +19,19 @@ let hostId = "{hostId}";
  | top 1000 by PreciseTimeStamp desc
 
 // Take some sample orchestrationId and run this
-// union *
-// | where OrchestrationId startswith "962bc602-7762-44d9-bb7a-9bef78ee967f"
-// | project PreciseTimeStamp, Message
+// let planId = "a1d4ca72-3150-4610-ba6f-3a6396189602"; 
+// let hostId = tostring(toscalar(OrchestrationPlanContext | where PlanId == planId | summarize by HostId));
+// let hostName = tostring(toscalar(ServiceHostAggregated() | where HostId == hostId | take 1 | project Name));
+// find in (ActivityLog, AgentPoolRequestHistory, HttpOutgoingRequests, OrchestrationLog, OrchestrationPlanContext, ProductTrace)
+// where OrchestrationId startswith planId
+// project PreciseTimeStamp, 
+//         OrchestrationId, 
+//         Tracepoint,
+//         Command, 
+//         Message,  
+//         UrlPath, 
+//         ResponseCode, 
+//         Level, // for coloring :)
+//         ActivityId, 
+//         ExceptionMessage
+// | extend HostName = hostName
