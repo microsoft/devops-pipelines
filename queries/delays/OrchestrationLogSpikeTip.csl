@@ -34,5 +34,9 @@ let hostId = "{hostId}";
 //         Level, // for coloring :)
 //         ActivityId, 
 //         ExceptionMessage,
-//         UserAgent
+//         UserAgent,
+//         HttpClientName,
+//         HttpMethod
 // | extend HostName = hostName
+// | extend Agent = coalesce(UserAgent, strcat(HttpMethod, "-", HttpClientName))
+// | project-away UserAgent, HttpClientName, HttpMethod
