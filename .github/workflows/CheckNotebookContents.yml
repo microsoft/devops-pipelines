@@ -15,8 +15,8 @@ jobs:
           which python
           pip show nbstripout
           python -m site
+          PATH=$PATH:/home/runner/.local/lib/python2.7/site-packages
           echo $PATH
-          which nbstripout
           
       - name: Check
         run: |
