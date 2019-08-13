@@ -11,10 +11,11 @@ jobs:
       - uses: actions/checkout@master
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade --user setuptools wheel nbstripout
+          python -m pip install --upgrade setuptools wheel nbstripout
           which python
           pip show nbstripout
-          nbstripout --install --global
+          python -m site
+          /home/runner/.local/lib/python2.7/site-packages/nbstripout --install --global
       - name: Check
         run: |
           cd ${{runner.workspace}}
