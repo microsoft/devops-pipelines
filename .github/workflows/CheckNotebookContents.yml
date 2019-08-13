@@ -20,7 +20,7 @@ jobs:
       - name: Update contents
         run: |
           InvalidNoteBooks=()
-          for f in ${{runner.workspace}}/*.ipynb
+          for f in ${{runner.workspace}}/devops-pipelines/*.ipynb
           do
             echo "Processing $f..."
             newFileName="${f}_stripped"
