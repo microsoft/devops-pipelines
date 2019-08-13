@@ -15,6 +15,7 @@ jobs:
       - name: Check
         run: |
           cd ${{runner.workspace}}
+          cd "devops-pipelines"
           ls
       - name: Update contents
         run: |
