@@ -1,0 +1,5 @@
+let service = "{service}";
+CosmosMdmMetrics
+| where Service == service
+| project monitoringAccount
+| take 1
