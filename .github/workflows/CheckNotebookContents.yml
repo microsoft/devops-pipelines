@@ -12,11 +12,11 @@ jobs:
       - name: Install dependencies
         run: |
           #!/usr/bin/env python
-          pip install --upgrade nbstripout
+          sudo pip install --upgrade nbstripout
           which python
           pip show nbstripout
           python -m site
-          sudo /home/runner/.local/lib/python2.7/site-packages/nbstripout/_nbstripout.py --install --global         
+          sudo python /home/runner/.local/lib/python2.7/site-packages/nbstripout/_nbstripout.py --install --global         
       - name: Check
         run: |
           cd ${{runner.workspace}}
