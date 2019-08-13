@@ -11,7 +11,8 @@ jobs:
       - uses: actions/checkout@master
       - name: Install dependencies
         run: |
-          pip install --upgrade setuptools wheel nbstripout
+          python -m pip install --upgrade setuptools wheel nbstripout
+          which python
           nbstripout --install --global
       - name: Check
         run: |
