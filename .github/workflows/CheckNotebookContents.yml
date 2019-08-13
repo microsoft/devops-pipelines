@@ -1,0 +1,41 @@
+name: Check notebook contents
+
+on: [pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@master
+      - name: Ensure dependencies
+        run: |          
+          #!/usr/bin/env python
+          sudo pip install --upgrade nbstripout
+          which python
+          pip show nbstripout
+          python -m site
+          #sudo python /home/runner/.local/lib/python2.7/site-packages/nbstripout/_nbstripout.py --install --global 
+          nbstripout --install --global
+      - name: Check contents
+        run: |
+          # Execute commands
+          InvalidNoteBooks=()
+          for f in ${{runner.workspace}}/devops-pipelines/*.ipynb
+          do
+            echo "Processing $f..."
+            newFileName="${f}_stripped"
+            cat $f | nbstripout > $newFileName
+            cmp --s $f $newFileName || InvalidNoteBooks+=($f)
+          done
+
+          if (( ${#InvalidNoteBooks[@]} )); then
+              echo "Notebooks shouldn't contain any outputs, please install pre-commit hook, see readme. Invalid notebooks:" 
+            for i in "${InvalidNoteBooks[@]}"
+            do
+               echo "$i"
+               # or do whatever with individual element of the array
+            done
+            exit 1
+          fi
