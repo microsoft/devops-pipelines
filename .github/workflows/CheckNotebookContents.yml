@@ -12,7 +12,7 @@ jobs:
       - name: Install dependencies
         run: |
           #!/usr/bin/env python
-          pip install --upgrade nbstripout
+          sudo pip install --upgrade nbstripout
           which python
           pip show nbstripout
           python -m site
