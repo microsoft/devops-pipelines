@@ -16,10 +16,8 @@ jobs:
           which python
           pip show nbstripout
           python -m site
-          export PATH="$PATH:/home/runner/.local/lib/python2.7/site-packages"
-          echo $PATH
-          export PYTHONPATH="${PYTHONPATH}:/usr/local/lib/python2.7/site-packages:/usr/lib/python2.7/site-packages"
-          nbstripout --install --global          
+          cd /home/runner/.local/lib/python2.7/site-packages/nbstripout
+          ls         
       - name: Check
         run: |
           cd ${{runner.workspace}}
