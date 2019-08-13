@@ -11,8 +11,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Install dependencies
         run: |
-          pip install setuptools
-          pip3 install --upgrade wheel nbstripout
+          pip3 install --upgrade setuptools wheel nbstripout
       - name: Check
         run: |
           cd ${{runner.workspace}}
