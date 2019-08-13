@@ -12,6 +12,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade nbstripout
+      - name: Check
+        run: |
+          cd ${{runner.workspace}}
+          ls
       - name: Update contents
         run: |
           InvalidNoteBooks=()
