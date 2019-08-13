@@ -15,8 +15,9 @@ jobs:
           which python
           pip show nbstripout
           python -m site
-          cd /home/runner/.local/lib/python2.7/site-packages/nbstripout
-          ls
+          echo $PATH
+          which nbstripout
+          
       - name: Check
         run: |
           cd ${{runner.workspace}}
