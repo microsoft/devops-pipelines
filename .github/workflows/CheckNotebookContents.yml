@@ -12,6 +12,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade setuptools wheel nbstripout
+          nbstripout --install --global
       - name: Check
         run: |
           cd ${{runner.workspace}}
