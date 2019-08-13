@@ -11,6 +11,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Install dependencies
         run: |
+          sudo apt-get install python-setuptools
           pip3 install --upgrade wheel nbstripout
       - name: Check
         run: |
