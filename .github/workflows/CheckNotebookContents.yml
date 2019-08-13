@@ -27,7 +27,18 @@ jobs:
             echo "Processing $f..."
             newFileName="${f}_stripped"
             cat $f | nbstripout > $newFileName
-            cmp --s $f $newFileName || InvalidNoteBooks+=($f)
+            diff --strip-trailing-cr $f $newFileName > /dev/null 2>&1
+            error=$?
+            if [ $error -eq 0 ]
+            then
+              echo "$f seems okay..."
+            elif [ $error -eq 1 ]
+            then
+              echo "$f is invalid..."
+            else
+              echo "Sorry, there was something wrong with the diff command..."
+            fi
+            exit $error
           done
 
           if (( ${#InvalidNoteBooks[@]} )); then
