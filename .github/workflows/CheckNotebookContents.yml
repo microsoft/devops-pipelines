@@ -21,7 +21,7 @@ jobs:
       - name: Check contents
         run: |
           # Execute commands
-          InvalidNoteBooks=()
+          hasError=False
           for f in ${{runner.workspace}}/devops-pipelines/*.ipynb
           do
             echo "Processing $f..."
@@ -35,18 +35,14 @@ jobs:
             elif [ $error -eq 1 ]
             then
               echo "$f is invalid..."
+              hasError=True
             else
               echo "Sorry, there was something wrong with the diff command..."
             fi
             exit $error
           done
 
-          if (( ${#InvalidNoteBooks[@]} )); then
-              echo "Notebooks shouldn't contain any outputs, please install pre-commit hook, see readme. Invalid notebooks:" 
-            for i in "${InvalidNoteBooks[@]}"
-            do
-               echo "$i"
-               # or do whatever with individual element of the array
-            done
+          if ($hasError); then
+            echo "Notebooks shouldn't contain any outputs, please install pre-commit hook, see readme." 
             exit 1
           fi
