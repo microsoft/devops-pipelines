@@ -17,7 +17,7 @@ jobs:
           python -m site
           PATH=$PATH:/home/runner/.local/lib/python2.7/site-packages
           echo $PATH
-          
+          nbstripout --install --global          
       - name: Check
         run: |
           cd ${{runner.workspace}}
