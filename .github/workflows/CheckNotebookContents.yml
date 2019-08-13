@@ -17,7 +17,7 @@ jobs:
           python -m site
           echo $PATH
           which nbstripout
-          ls
+          
       - name: Check
         run: |
           cd ${{runner.workspace}}
