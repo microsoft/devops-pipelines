@@ -16,7 +16,8 @@ jobs:
           which python
           pip show nbstripout
           python -m site
-          sudo python /home/runner/.local/lib/python2.7/site-packages/nbstripout/_nbstripout.py --install --global         
+          #sudo python /home/runner/.local/lib/python2.7/site-packages/nbstripout/_nbstripout.py --install --global 
+          nbstripout --install --global
       - name: Check
         run: |
           cd ${{runner.workspace}}
