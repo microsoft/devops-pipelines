@@ -9,8 +9,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@master
-      - name: Install dependencies
-        run: |
+      - name: Ensure dependencies
+        run: |          
           #!/usr/bin/env python
           sudo pip install --upgrade nbstripout
           which python
@@ -18,13 +18,9 @@ jobs:
           python -m site
           #sudo python /home/runner/.local/lib/python2.7/site-packages/nbstripout/_nbstripout.py --install --global 
           nbstripout --install --global
-      - name: Check
+      - name: Check contents
         run: |
-          cd ${{runner.workspace}}
-          cd "devops-pipelines"
-          ls
-      - name: Update contents
-        run: |
+          # Execute commands
           InvalidNoteBooks=()
           for f in ${{runner.workspace}}/devops-pipelines/*.ipynb
           do
