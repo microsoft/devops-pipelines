@@ -12,10 +12,9 @@ jobs:
       - name: Install dependencies
         run: |
           #!/usr/bin/python
-          sudo apt install python3-pip
-          pip3 install --upgrade nbstripout
+          pip install --upgrade nbstripout
           which python
-          pip3 show nbstripout
+          pip show nbstripout
           python -m site
           export PATH="$PATH:/home/runner/.local/lib/python2.7/site-packages"
           echo $PATH
