@@ -14,6 +14,21 @@ jobs:
           pip install --upgrade nbstripout
       - name: Update contents
         run: |
-          for filename in ${{runner.workspace}}/*.ipynb; do
-            $filename
+          InvalidNoteBooks=()
+          for f in ${{runner.workspace}}/*.ipynb
+          do
+            echo "Processing $f..."
+            newFileName="${f}_stripped"
+            cat $f | nbstripout > $newFileName
+            cmp --s $f $newFileName || InvalidNoteBooks+=($f)
           done
+
+          if (( ${#InvalidNoteBooks[@]} )); then
+              echo "Notebooks shouldn't contain any outputs, please install pre-commit hook, see readme. Invalid notebooks:" 
+            for i in "${InvalidNoteBooks[@]}"
+            do
+               echo "$i"
+               # or do whatever with individual element of the array
+            done
+            exit 1
+          fi
