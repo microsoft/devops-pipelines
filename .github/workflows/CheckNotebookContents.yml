@@ -38,8 +38,7 @@ jobs:
               hasError=True
             else
               echo "Sorry, there was something wrong with the diff command..."
-            fi
-            exit $error
+            fi            
           done
 
           if ($hasError); then
