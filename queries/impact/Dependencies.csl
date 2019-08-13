@@ -1,0 +1,11 @@
+let scaleUnit = "{su}";
+let startTime = todatetime("{start}") - 8hr;
+let endTime = todatetime("{end}") + 15min;
+let service = "{service}";
+func_ActivityLog
+| where Service =~ service and ScaleUnit =~ scaleUnit
+| where PreciseTimeStamp between (startTime .. endTime)
+| where ActivityStatus > 0
+| extend VSID = iff(isnotempty(AnonymousIdentifier), AnonymousIdentifier, VSID)
+| extend Reason = iff(ActivityStatus == 1, "failed", "slow")
+| summarize avg(RedisExecutionTimeInMs), avg(VssClientExecutionTimeInMs), avg(SqlExecutionTimeInMs), avg(QueueTimeInMs) by bin(PreciseTimeStamp, 5min)
