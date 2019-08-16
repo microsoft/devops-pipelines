@@ -1,0 +1,21 @@
+// OK SO WHAT HAPPENED: an end-to-end analysis based on DistributedTask OrchestrationId
+// zacox@microsoft.com
+//
+let oid = {OrchestrationId};
+let planId = substring(oid, 0, 36);
+let hostId = tostring(toscalar(OrchestrationPlanContext | where PlanId == planId | summarize by HostId));
+let hostName = tostring(toscalar(ServiceHostAggregated() | where HostId == hostId | take 1 | project Name));
+find in (ActivityLog, AgentPoolRequestHistory, HttpOutgoingRequests, OrchestrationLog, OrchestrationPlanContext, ProductTrace)
+where OrchestrationId startswith planId
+project PreciseTimeStamp,
+        OrchestrationId,
+        Command,
+        Message
+//         Tracepoint,
+//         UrlPath,
+//         ResponseCode,
+//         Level, // for coloring :)
+//         ActivityId,
+//         ExceptionMessage
+// | extend HostName = hostName
+| order by PreciseTimeStamp asc

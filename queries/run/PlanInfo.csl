@@ -1,0 +1,13 @@
+// Pull a useful collection of data about a specific plan
+//
+let oid = {OrchestrationId};
+let pid = substring(oid, 0, 36);
+let HostNames = ServiceHostAggregated
+| where Service in ("tfs", "pipelines")
+| summarize by HostId, Name;
+let RingMap = union Ring_Mapping("tfs"), Ring_Mapping("pipelines");
+OrchestrationPlanContext
+| where PlanId == pid
+| summarize RoleInstances=make_set(RoleInstance), JobOrchestrationIds=make_set(OrchestrationId) by HostId, ScaleUnit, Region, Tenant, ProjectName, PlanType, DefinitionId, DefinitionName
+| join kind=leftouter HostNames on HostId | project-away HostId1
+| join kind=leftouter RingMap on ScaleUnit| project-away ScaleUnit1
