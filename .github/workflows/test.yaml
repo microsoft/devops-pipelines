@@ -39,8 +39,8 @@ jobs:
         pm.execute_notebook(
            'delays.ipynb',
            '${{ RUNNER.temp }}/nb-runner/delays.ipynb',
-           parameters = dict(params)
-           log_output=True
+           parameters = dict(params),
+           log_output = True
         )
         EOF
     - name: Strip out
