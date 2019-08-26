@@ -1,0 +1,32 @@
+name: Sql analysis
+
+on:
+  push:
+    branches:
+    - automation/sql/*
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:    
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies	
+      run: |	
+        python -m pip install matplotlib nimport azure-kusto-notebooks plotly
+    - uses: yaananth/run-notebook@v1
+      env:
+        RUNNER: ${{ toJson(runner) }}
+        SECRETS: ${{ toJson(secrets) }}
+        GITHUB: ${{ toJson(github) }}
+      with:
+        notebook: "sql.ipynb"
+        params: "params.json"
+      continue-on-error: true
+    - uses: actions/upload-artifact@master
+      with:
+        name: output
+        path: ${{ RUNNER.temp }}/nb-runner
+      env:
+        RUNNER: ${{ toJson(runner) }}
