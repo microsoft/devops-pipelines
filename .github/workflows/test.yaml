@@ -25,6 +25,7 @@ jobs:
         RUNNER: ${{ toJson(runner) }}
         SECRETS: ${{ toJson(secrets) }}
         GITHUB: ${{ toJson(github) }}
+      continue-on-error: true
       run: |
         python - << "EOF"
         import papermill as pm
