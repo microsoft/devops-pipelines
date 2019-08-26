@@ -32,8 +32,6 @@ jobs:
         import json
         os.makedirs('${{ RUNNER.temp }}/nb-runner')
         params = {}
-        with open('${{ RUNNER.temp }}/nb-runner/.env', "w") as env:
-          json.dump(json.loads("${{ SECRETS }}"), env)
         with open('params.json', 'r') as paramsFile:
           params = json.loads(paramsFile.read())
         pm.execute_notebook(
