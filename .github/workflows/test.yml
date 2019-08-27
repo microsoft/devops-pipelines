@@ -7,6 +7,7 @@ on:
     - automation/delays/*
     - test
     - testing/2
+    - testing
 
 jobs:
   run:
