@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - automation/delays/*
+    - automation/delays/testICM
 
 jobs:
   run:
