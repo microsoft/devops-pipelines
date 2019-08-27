@@ -3,11 +3,7 @@ name: Testing
 on:
   push:
     branches:
-    - master
-    - automation/delays/*
-    - test
-    - testing/2
-    - testingYash
+    - yashtestingbranch
 
 jobs:
   run:
