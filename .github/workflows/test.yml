@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - yashtestingbranch
+    - yashtestingbranchtree/1
 
 jobs:
   run:
