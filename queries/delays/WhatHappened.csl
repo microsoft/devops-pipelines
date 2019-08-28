@@ -1,0 +1,21 @@
+let planId = "35ab4561-69a8-423a-8606-e18e17e00d17"; 
+let hostId = tostring(toscalar(OrchestrationPlanContext | where PlanId == planId | summarize by HostId));
+let hostName = tostring(toscalar(ServiceHostAggregated() | where HostId == hostId | take 1 | project Name));
+find in (ActivityLog, AgentPoolRequestHistory, HttpOutgoingRequests, OrchestrationLog, OrchestrationPlanContext, ProductTrace)
+where OrchestrationId startswith planId
+project PreciseTimeStamp, 
+        OrchestrationId, 
+        Tracepoint,
+        Command, 
+        Message,  
+        UrlPath, 
+        ResponseCode, 
+        Level, // for coloring :)
+        ActivityId, 
+        ExceptionMessage,
+        UserAgent,
+        HttpClientName,
+        HttpMethod
+| extend HostName = hostName
+| extend Agent = coalesce(UserAgent, strcat(HttpMethod, "-", HttpClientName))
+| project-away UserAgent, HttpClientName, HttpMethod
