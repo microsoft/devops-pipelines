@@ -23,8 +23,8 @@ jobs:
       with:
         notebook: "ja.ipynb"
         params: "params.json"
-      continue-on-error: true
     - uses: actions/upload-artifact@master
+      if: always()
       with:
         name: output
         path: ${{ RUNNER.temp }}/nb-runner
