@@ -23,6 +23,7 @@ jobs:
       with:
         notebook: "delays.ipynb"
         params: "params.json"
+        poll: true
     - uses: actions/upload-artifact@master
       if: always()
       with:
