@@ -1,5 +1,5 @@
 // Use this to sample a few OrchestrationIds
-// Run those OrchestrationIds through queries/delays/WhatHappened.csl
+// Run those OrchestrationIds through queries/run/WhatHappened.csl
 // Or https://notebooksv2.azure.com/yaananth/projects/06OasuNRs6rK/run.ipynb?planId=e75d6056-bfba-4906-b454-02ba3b7880e7 (change planId)
 let scaleUnit = "{su}";
 let startTime = todatetime("{start}") - 15min;
