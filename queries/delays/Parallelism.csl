@@ -1,0 +1,21 @@
+// orchestrator kpi's
+let hostId = "{hostId}";
+let startTime = todatetime("{start}") - 15min;
+let endTime = todatetime("{end}") + 15min;
+let sampleInterval = 1m;
+range sampleTime from startTime to endTime step sampleInterval
+| extend dummyKey=1
+| join kind=inner ( // carthesian product really
+    AgentPoolRequestHistory
+    | where HostId == hostId
+    | where StartTime != '1601-01-01T00:00:00Z' // Exclude the jobs that were never started
+    | where StartTime < endTime and FinishTime > startTime  // Exclude upfront the jobs that weren't running during our window.
+    | where bin(StartTime, 1m) != bin(FinishTime, 1m)       // Exclude upfront jobs that started and completed within the same minute interval.
+    | extend dummyKey=1
+) on dummyKey
+| where StartTime < sampleTime and FinishTime > sampleTime
+| make-series
+    C=count()
+    on sampleTime
+    in range(startTime, endTime, sampleInterval)
+| extend HostId = hostId
