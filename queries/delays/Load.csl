@@ -5,6 +5,7 @@ let endTime = todatetime("{end}") + 15min;
 let service = "{service}";
 let hubName = "{hub}";
 let interval = 1m;
+let hostId = "{hostId}";
 KPI
  | where PreciseTimeStamp between (startTime .. endTime)
  | where Service =~ service
@@ -13,9 +14,11 @@ KPI
  | extend DataObj = parsejson(Metrics) 
  | extend MetricsObjArr = parsejson(DataObj.metrics)
  | extend MetricsObj = MetricsObjArr[0]
+ | extend HostId = tostring(DataObj.hostId)
  | extend Name = tostring(MetricsObj.name)
  | extend DisplayName = MetricsObj.displayName
  | extend Value = todouble(MetricsObj.value)
+ | where HostId startswith hostId
  | project PreciseTimeStamp, DataObj, Name, DisplayName, Value, MetricsObj 
  | summarize sum(Value) by Name, bin(PreciseTimeStamp, interval)
  | render timechart

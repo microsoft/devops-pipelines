@@ -2,3 +2,5 @@ Kqlmagic_temp_files
 .ipynb_checkpoints/*
 *.pyc
 *.sh
+.venv
+.DS_Store
