@@ -14,7 +14,7 @@ jobs:
       uses: actions/setup-python@v1
     - name: Install dependencies	
       run: |	
-        python -m pip install matplotlib nimport azure-kusto-notebooks plotly numpy
+        python -m pip install matplotlib nimport azure-kusto-notebooks plotly numpy==1.17.0
     - uses: yaananth/run-notebook@v1
       env:
         RUNNER: ${{ toJson(runner) }}
