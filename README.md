@@ -5,6 +5,7 @@ Uses both [azure data explorer](https://docs.microsoft.com/en-us/azure/data-expl
 
 # Usage
 ## Commands
+test
 ```
 # Initialize
 !pip install --upgrade pip Kqlmagic nimport azure.kusto.data[pandas]
